@@ -1,0 +1,14 @@
+{
+  "name": "auto-timestamp",
+  "version": "1.0.0",
+  "description": "Add timestamp for resources to handle version control automatically.",
+  "main": "auto-timestamp.js",
+  "scripts": {
+    "test": "node test/test.js"
+  },
+  "author": "Sheldon Law",
+  "license": "MIT",
+  "dependencies": {
+    "md5-file": "^4.0.0"
+  }
+}
