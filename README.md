@@ -1,13 +1,14 @@
 # auto-timestamp
 Add timestamp for resources to handle version control automatically.
 
-# usage
+# Usage
 
-1. install
+## Install
 ``` shell
 npm i auto-timestamp
 ```
 
+## Go ahead
 ``` js
 const path = require('path');
 const AutoTimestamp = require('auto-timestamp');
