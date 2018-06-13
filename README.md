@@ -2,9 +2,15 @@
 Add timestamp for resources to handle version control automatically.
 
 # usage
+
+1. install
+``` shell
+npm i auto-timestamp
+```
+
 ``` js
 const path = require('path');
-const AutoTimestamp = require('../auto-timestamp.js');
+const AutoTimestamp = require('auto-timestamp');
 
 // 配置静态资源路径 - 缩小搜索范围
 const staticPaths = [
