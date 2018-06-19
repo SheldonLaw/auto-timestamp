@@ -5,11 +5,13 @@ const md5File = require('md5-file');
 const IMG_TYPE = ['jpg', 'gif', 'png', 'jpeg', 'webp'];
 const INIT_MD5 = "init_md5";
 
+// TODO: handle require module without .js
 class AutoTimestamp {
 
 	constructor(opt) {
 		opt = opt || {};
 		if (!opt.staticPaths) throw new Error('Static paths required!');
+		this.documentRoot = opt.documentRoot;
 
 		const filter = opt.staticFilter || staticFilter;
 		const staticFiles = opt.staticPaths.reduce((last, folder)=>{
@@ -48,7 +50,7 @@ class AutoTimestamp {
 		let hasReference = false;
 		for(staticFile in this.staticFiles) {
 			if (isImg) break; // 图片 = 无引用
-			const matchResult = matchFile(entrance, entranceTxt, staticFile);
+			const matchResult = matchFile(entrance, entranceTxt, staticFile, this.documentRoot);
 			if (matchResult) {
 				const { relativePath, matchPath } = matchResult;
 				hasReference = true;
@@ -102,10 +104,30 @@ function replaceAll(src, search, replacement) {
     return src.replace(new RegExp(search.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), 'g'), replacement);
 }
 
-function matchFile(entrance, entranceTxt, staticFile) {
-	// 粗略匹配 - 文件名匹配
+function matchFile(entrance, entranceTxt, staticFile, documentRoot) {
 	const name = path.basename(staticFile);
+	if (documentRoot) {
+		/**
+		 * 正则匹配：(seajs.use\([\[]*(?:[\'\"][^\'\"]*[\'\"],)*[\'\"]([^\'\"]*xxx(\.js)*[^\'\"]*)[\'\"])
+		 * 1. seajs.use(['xxx','xxx'], function(){});	- finished
+		 * 2. seajs.use('xxx'); 						- finished
+		 * 3. seajs.use('xxx', function());				- finished
+		 */
+		const seajsRequire = `(seajs.use\\([\\[]*(?:[\\'\\"][^\\'\\"]*[\\'\\"],)*[\\'\\"]([^\\'\\"]*${name.replace('.js', '(.js)*').replace(/\./g,'\\.')}[^\\'\\"]*)[\\'\\"])`;
+		const seajsMatch = entranceTxt.match(seajsRequire);
+		if (seajsMatch) {
+			// 处理seajs引用模块: 1. 不带.js 2. 基于webroot
+			const matchPath = seajsMatch[2];
+			const relativePath = rmQueryStr(matchPath);
+			const absolutePath = path.join(documentRoot, relativePath);
+			if (staticFile != absolutePath && staticFile.replace('.js', '') != absolutePath) return; // 绝对路径匹配
+			return { relativePath, matchPath };
+		}
+	}
+
+	// 粗略匹配 - 文件名匹配
 	if (entranceTxt.indexOf(name) == -1) return;
+	// 正常资源引用
 	// 精准匹配 - 路径匹配
 	const str = `([^\\'\\"\\(]*${name.replace(/\./g,'\\.')}[^\\'\\"\\)]*)`;
 	const match = entranceTxt.match(str); // 相对路径匹配
@@ -113,7 +135,6 @@ function matchFile(entrance, entranceTxt, staticFile) {
 	const matchPath = match[0];
 	const relativePath = rmQueryStr(matchPath);
 	const absolutePath = path.join(path.dirname(entrance), relativePath);
-	// TODO: 目前基于路径匹配，无法满足dust.js基于服务器相对路径引用模块的情况
 	if (staticFile != absolutePath) return; // 绝对路径匹配
 	return { relativePath, matchPath };
 }

@@ -31,7 +31,8 @@ const staticFilter = function(filePath) {
 }
 const autoTimestamp = new AutoTimestamp({
 	staticPaths: staticPaths,
-	staticFilter: staticFilter // 可选
+	staticFilter: staticFilter, // 可选
+	documentRoot: __dirname // if you use seajs, you should tell me where is your document root.
 });
 // 配置入口路径
 const entranceList = [
